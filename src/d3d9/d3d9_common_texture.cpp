@@ -296,7 +296,8 @@ namespace dxvk {
     imageInfo.numLayers       = m_desc.ArraySize;
     imageInfo.mipLevels       = m_desc.MipLevels;
     imageInfo.usage           = VK_IMAGE_USAGE_TRANSFER_SRC_BIT
-                              | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+                              | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+                              | VK_IMAGE_USAGE_SAMPLED_BIT;
     imageInfo.stages          = VK_PIPELINE_STAGE_TRANSFER_BIT
                               | m_device->GetEnabledShaderStages();
     imageInfo.access          = VK_ACCESS_TRANSFER_READ_BIT
