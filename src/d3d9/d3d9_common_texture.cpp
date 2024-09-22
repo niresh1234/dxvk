@@ -333,7 +333,7 @@ namespace dxvk {
     }
     else
     {
-      Usage &= ~VK_IMAGE_USAGE_SAMPLED_BIT;
+      imageInfo.usage &= ~VK_IMAGE_USAGE_SAMPLED_BIT;
     }
 
     // The image must be marked as mutable if it can be reinterpreted
