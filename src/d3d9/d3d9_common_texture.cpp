@@ -531,6 +531,13 @@ namespace dxvk {
              | VK_IMAGE_USAGE_TRANSFER_SRC_BIT
              | VK_IMAGE_USAGE_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT);
 
+
+    // Ignore sampled bit in case the image was created with
+    // an image flag that only allows attachment usage
+    if (m_desc.IsAttachmentOnly)
+      Usage &= ~VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    
     // If the image is used only as an attachment, we never
     // have to transform the image back to a different layout
     if (Usage == VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
