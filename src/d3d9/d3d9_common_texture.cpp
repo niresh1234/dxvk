@@ -328,7 +328,13 @@ namespace dxvk {
     // However, StretchRect does not allow stretching for DS formats,
     // so unless we need to resolve, it should always hit code paths that only need TRANSFER_BIT.
     if (!m_desc.IsAttachmentOnly || !IsDepthStencilFormat(m_desc.Format) || imageInfo.sampleCount != VK_SAMPLE_COUNT_1_BIT)
+    {
       imageInfo.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    }
+    else
+    {
+      Usage &= ~VK_IMAGE_USAGE_SAMPLED_BIT;
+    }
 
     // The image must be marked as mutable if it can be reinterpreted
     // by a view with a different format. Depth-stencil formats cannot
