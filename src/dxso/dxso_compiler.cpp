@@ -2864,7 +2864,7 @@ void DxsoCompiler::emitControlFlowGenericLoop(
     }
 
     // SM < 1.x does not have dcl sampler type.
-    if (m_programInfo.majorVersion() < 2 && !m_samplers[samplerIdx].color[SamplerTypeTexture2D].imageVarId)
+    if (m_programInfo.majorVersion() < 2 && m_samplers[samplerIdx].color[SamplerTypeTexture2D].imageVarId == 0)
       emitDclSampler(samplerIdx, DxsoTextureType::Texture2D);
 
     DxsoSampler sampler = m_samplers.at(samplerIdx);
