@@ -104,8 +104,10 @@ namespace dxvk {
 
     uint32_t varId = 0;
     uint32_t typeId = 0;
-
+    uint32_t imageVarId = 0;
     uint32_t imageTypeId = 0;
+    uint32_t sampledTypeId = 0u;
+    uint32_t samplerIndex = 0u;
   };
 
   enum DxsoSamplerType : uint32_t {
@@ -369,6 +371,8 @@ namespace dxvk {
     uint32_t m_samplerArray = 0u;
 
     uint32_t m_mainFuncLabel = 0;
+
+    DxvkPushDataBlock m_samplerPushData;
 
     //////////////////////////////////////
     // Common function definition methods
