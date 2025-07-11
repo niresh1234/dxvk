@@ -3599,12 +3599,15 @@ void DxsoCompiler::emitControlFlowGenericLoop(
     m_rsBlock = blockInfo.first;
     m_rsFirstSampler = blockInfo.second;
 
+    /*
     uint32_t samplerDwordCount = (samplerCount + 1u) / 2u;
 
-    /*
+    
     m_samplerPushData = DxvkPushDataBlock(m_programInfo.shaderStage(), GetPushSamplerOffset(0u),
       samplerDwordCount * sizeof(uint32_t), sizeof(uint32_t), (1u << samplerDwordCount) - 1u);
     */
+    uint32_t samplerDwordCount = samplerCount + 1u;
+    m_samplerPushData = DxvkPushDataBlock(m_programInfo.shaderStage(), GetPushSamplerOffset(0u), samplerDwordCount * sizeof(uint32_t), sizeof(uint32_t), (1u << samplerDwordCount) - 1u);
   }
 
 
