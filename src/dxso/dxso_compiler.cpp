@@ -10,6 +10,8 @@
 #include "dxso_util.h"
 
 #include <cfloat>
+#include <cstdlib>
+#include "../util/util_env.h"
 
 namespace dxvk {
 
@@ -3151,16 +3153,52 @@ void DxsoCompiler::emitControlFlowGenericLoop(
           DxsoRegisterValue       coordinates,
           uint32_t                reference,
           uint32_t                fetch4,
-    const SpirvImageOperands&     operands) {
+    const SpirvImageOperands&     inOperands) {
+    SpirvImageOperands operands = inOperands;
+
     const bool depthCompare = reference != 0;
-    const bool explicitLod  =
-       (operands.flags & spv::ImageOperandsLodMask)
-    || (operands.flags & spv::ImageOperandsGradMask);
 
     uint32_t image = m_module.opLoad(samplerInfo.imageTypeId, samplerInfo.imageVarId);
     uint32_t sampler = LoadSampler(m_module, m_samplerArray, m_rsBlock, m_rsFirstSampler, samplerInfo.samplerIndex);
 
     uint32_t sampledImage = m_module.opSampledImage(samplerInfo.sampledTypeId, image, sampler);
+
+    // EXPERIMENT (Intel VK_ERROR_DEVICE_LOST with sampler heap + texldd):
+    // replace explicit-gradient sampling (texldd) with an explicit LOD that
+    // is computed from the gradients. Only touches 2D samplers.
+    //   DXSO_GRAD_MODE=0 (or unset) -> unchanged
+    //   DXSO_GRAD_MODE=1            -> every texldd
+    //   DXSO_GRAD_MODE=2            -> only depth-compare texldd
+    if ((operands.flags & spv::ImageOperandsGradMask) && samplerInfo.dimensions == 2) {
+      static const int gradMode = std::atoi(env::getEnvVar("DXSO_GRAD_MODE").c_str());
+
+      if (gradMode == 1 || (gradMode == 2 && depthCompare)) {
+        const uint32_t f32Type   = m_module.defFloatType(32);
+        const uint32_t vec2Type  = m_module.defVectorType(f32Type, 2);
+        const uint32_t ivec2Type = m_module.defVectorType(m_module.defIntType(32, 1), 2);
+
+        uint32_t texSize = m_module.opImageQuerySizeLod(ivec2Type, image, m_module.consti32(0));
+        texSize = m_module.opConvertStoF(vec2Type, texSize);
+
+        uint32_t gx = m_module.opFMul(vec2Type, operands.sGradX, texSize);
+        uint32_t gy = m_module.opFMul(vec2Type, operands.sGradY, texSize);
+
+        // rho^2 = max(|dx|^2, |dy|^2), lod = log2(rho) = 0.5 * log2(rho^2)
+        uint32_t rho2 = m_module.opFMax(f32Type,
+          m_module.opDot(f32Type, gx, gx),
+          m_module.opDot(f32Type, gy, gy));
+        rho2 = m_module.opFMax(f32Type, rho2, m_module.constf32(1e-20f));
+
+        operands.sLod = m_module.opFMul(f32Type,
+          m_module.opLog2(f32Type, rho2), m_module.constf32(0.5f));
+        operands.flags &= ~uint32_t(spv::ImageOperandsGradMask);
+        operands.flags |=  uint32_t(spv::ImageOperandsLodMask);
+      }
+    }
+
+    const bool explicitLod  =
+       (operands.flags & spv::ImageOperandsLodMask)
+    || (operands.flags & spv::ImageOperandsGradMask);
 
     uint32_t val;
 
